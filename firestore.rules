@@ -1,0 +1,105 @@
+rules_version = '2';
+
+// Reglas de producción. El Admin SDK (Netlify Functions) IGNORA estas reglas:
+// por eso todo lo que escribe el backend (notifications, notification_logs, stats)
+// queda cerrado a los clientes.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Custom claim "admin" asignado con scripts/set-admin.mjs (nunca desde el cliente)
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.admin == true
+        && request.auth.token.firebase.sign_in_provider == 'password';
+    }
+
+    // Categorías permitidas (grupos de suscripción). Editá esta lista junto con la UI.
+    function validGroups(g) {
+      return g is list && g.size() <= 10
+        && g.hasOnly(['news', 'offers', 'events']);
+    }
+
+    // ---------- users/{uid}: perfil mínimo del visitante ----------
+    match /users/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['createdAt', 'lastSeenAt', 'groups'])
+        && validGroups(request.resource.data.groups);
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['createdAt', 'lastSeenAt', 'groups'])
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validGroups(request.resource.data.groups);
+      allow delete: if isAdmin();
+    }
+
+    // ---------- devices/{sha256(token)}: un documento por token FCM ----------
+    // El ID es el hash del token: evita duplicados y no filtra el token en la ruta.
+    match /devices/{deviceId} {
+      // "resource == null" permite al cliente comprobar si su dispositivo ya existe.
+      allow get: if signedIn()
+        && (resource == null || resource.data.uid == request.auth.uid || isAdmin());
+      // Un usuario normal solo puede listar SUS dispositivos (la consulta debe filtrar por uid).
+      allow list: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if signedIn()
+        && deviceId.size() == 64
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'token', 'platform', 'groups', 'permission', 'createdAt', 'lastSeenAt'])
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 20
+        && request.resource.data.token.size() < 4096
+        && validGroups(request.resource.data.groups);
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'token', 'platform', 'groups', 'permission', 'createdAt', 'lastSeenAt'])
+        && request.resource.data.token is string
+        && request.resource.data.token.size() < 4096
+        && validGroups(request.resource.data.groups);
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    // ---------- notifications / notification_logs: solo lectura para admins ----------
+    // Las escribe únicamente el backend con Admin SDK.
+    match /notifications/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+
+      match /events/{eventId} {
+        allow read: if isAdmin();
+        allow write: if false;
+      }
+    }
+
+    match /notification_logs/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // ---------- templates (plantillas de mensaje) y settings: solo admins ----------
+    match /templates/{id} {
+      allow read, delete: if isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['name', 'title', 'body', 'url', 'createdAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && request.resource.data.title is string && request.resource.data.title.size() <= 65
+        && request.resource.data.body is string && request.resource.data.body.size() <= 240;
+    }
+
+    match /settings/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // Todo lo demás, denegado
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Alan Medina — Informática y Educación</title>
+  <meta name="description" content="App oficial de Alan Medina — Informática y Educación">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icons/favicon.ico">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Alan Medina">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/firebase-config.js"></script>
+  <script src="/js/redirect.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <img src="/icons/icon-192.png" alt="" width="56" height="56">
+      <h1>Alan Medina — Informática y Educación</h1>
+    </header>
+
+    <section class="card" aria-live="polite">
+      <h2>Bienvenido/a</h2>
+      <p id="push-status">Comprobando compatibilidad…</p>
+
+      <div class="actions">
+        <button id="btn-enable" class="primary" hidden>Activar avisos y entrar a la tienda</button>
+        <button id="btn-skip" hidden>Entrar sin avisos</button>
+        <button id="btn-store" hidden>Ir a la tienda</button>
+        <button id="btn-disable" hidden>Desactivar avisos en este dispositivo</button>
+        <button id="btn-install" hidden>Instalar app</button>
+      </div>
+
+      <div id="ios-help" class="help" hidden>
+        <strong>Cómo activar los avisos en iPhone / iPad (iOS/iPadOS 16.4 o superior):</strong>
+        <ol>
+          <li>Abrí esta página en <b>Safari</b>.</li>
+          <li>Tocá el botón <b>Compartir</b> y elegí <b>Agregar a pantalla de inicio</b>.</li>
+          <li>Abrí la app desde el ícono nuevo y tocá <b>Activar avisos y entrar a la tienda</b>.</li>
+        </ol>
+      </div>
+
+      <div id="denied-help" class="help" hidden>
+        Bloqueaste las notificaciones. Para volver a activarlas, cambiá el permiso del sitio en los
+        ajustes del navegador (candado o ícono de ajustes junto a la dirección) y recargá la página.
+      </div>
+
+      <p id="offline-help" class="muted" hidden>Sin conexión. Cuando vuelva internet te llevamos a la tienda.</p>
+    </section>
+  </main>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>

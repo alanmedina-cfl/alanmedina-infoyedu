@@ -1,0 +1,42 @@
+# Netlify: configuración del proyecto (se versiona en Git)
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+  # firebase-admin se instala como dependencia en lugar de empaquetarse
+  external_node_modules = ["firebase-admin"]
+
+# --- Service Worker: nunca debe quedar cacheado por el CDN/navegador ---
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/firebase-config.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# --- Cabeceras de seguridad para todo el sitio ---
+# La CSP no admite scripts ni estilos inline: todo el JS/CSS va en archivos propios.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self'; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://fcm.googleapis.com https://firebaseinstallations.googleapis.com; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+
+# NO agregues una redirección catch-all "/* -> /index.html": rompería iconos,
+# manifest, sw.js y /api/*. Esta app es multipágina (/ y /admin/).
+[[redirects]]
+  from = "/admin"
+  to = "/admin/"
+  status = 301

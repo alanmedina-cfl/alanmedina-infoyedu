@@ -1,0 +1,16 @@
+{
+  "name": "alan-medina-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PWA de Alan Medina — Informática y Educación: redirige a la tienda y recibe notificaciones push (FCM)",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "npx netlify-cli dev",
+    "set-admin": "node scripts/set-admin.mjs",
+    "verify": "python3 scripts/verificar_proyecto.py ."
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1"
+  }
+}

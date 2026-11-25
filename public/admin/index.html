@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Panel de administración</title>
+  <link rel="icon" href="/icons/favicon.ico">
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/firebase-config.js"></script>
+  <script type="module" src="/admin/admin.js"></script>
+</head>
+<body>
+  <main class="wrap wide">
+    <h1>Panel de administración</h1>
+
+    <!-- LOGIN -->
+    <section id="view-login" class="card" hidden>
+      <h2>Iniciar sesión</h2>
+      <form id="form-login" autocomplete="on">
+        <label class="field">Correo electrónico
+          <input id="login-email" type="email" autocomplete="username" required>
+        </label>
+        <label class="field">Contraseña
+          <input id="login-pass" type="password" autocomplete="current-password" required>
+        </label>
+        <div class="actions">
+          <button class="primary" type="submit">Entrar</button>
+          <button id="btn-reset" type="button">Olvidé mi contraseña</button>
+        </div>
+        <p id="login-msg" class="msg" role="alert"></p>
+      </form>
+    </section>
+
+    <!-- PANEL -->
+    <div id="view-panel" hidden>
+      <div class="actions">
+        <span id="who" class="muted"></span>
+        <button id="btn-logout">Cerrar sesión</button>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button role="tab" data-tab="send" aria-selected="true">Enviar</button>
+        <button role="tab" data-tab="history" aria-selected="false">Historial</button>
+        <button role="tab" data-tab="devices" aria-selected="false">Dispositivos</button>
+        <button role="tab" data-tab="templates" aria-selected="false">Plantillas</button>
+      </div>
+
+      <!-- ENVIAR -->
+      <section id="tab-send" class="card">
+        <h2>Nueva notificación</h2>
+        <form id="form-send">
+          <label class="field">Plantilla
+            <select id="send-template"><option value="">— ninguna —</option></select>
+          </label>
+          <label class="field">Título
+            <input id="send-title" type="text" maxlength="65" required>
+            <span class="counter"><span id="cnt-title">0</span>/65</span>
+          </label>
+          <label class="field">Mensaje
+            <textarea id="send-body" maxlength="240" required></textarea>
+            <span class="counter"><span id="cnt-body">0</span>/240</span>
+          </label>
+          <div class="row">
+            <label class="field">URL de destino (opcional)
+              <input id="send-url" type="text" placeholder="Vacío = abre la tienda. O pegá un enlace de https://alanmedinainfoyedu.mitiendanube.com/…">
+            </label>
+            <label class="field">Icono
+              <select id="send-icon">
+                <option value="/icons/icon-192.png">Icono de la app (192)</option>
+                <option value="/icons/icon-512.png">Icono de la app (512)</option>
+              </select>
+            </label>
+          </div>
+          <label class="field">Imagen (opcional, URL https)
+            <input id="send-image" type="url" placeholder="https://…">
+          </label>
+
+          <fieldset>
+            <legend>Audiencia</legend>
+            <label><input type="radio" name="aud" value="all" checked> Todos los dispositivos</label>
+            <label><input type="radio" name="aud" value="groups"> Grupos:</label>
+            <div id="aud-groups" class="row" hidden>
+              <label><input type="checkbox" value="news"> Novedades</label>
+              <label><input type="checkbox" value="offers"> Ofertas</label>
+              <label><input type="checkbox" value="events"> Eventos</label>
+            </div>
+            <label><input type="radio" name="aud" value="uids"> Usuarios específicos (UID):</label>
+            <textarea id="aud-uids" placeholder="Un UID por línea" hidden></textarea>
+          </fieldset>
+
+          <label class="field">Programar envío (opcional)
+            <input id="send-at" type="datetime-local">
+          </label>
+
+          <div class="actions">
+            <button class="primary" type="submit" id="btn-send">Enviar…</button>
+          </div>
+          <p id="send-msg" class="msg" role="status"></p>
+          <p class="note">“Aceptadas por FCM” significa que Google recibió el mensaje para entregarlo.
+            No equivale a notificaciones mostradas ni leídas.</p>
+        </form>
+      </section>
+
+      <!-- HISTORIAL -->
+      <section id="tab-history" class="card" hidden>
+        <h2>Historial</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Título</th><th>Estado</th><th>Destinatarios</th><th>Aceptadas FCM</th><th>Mostradas*</th><th>Clics*</th></tr></thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+        <p class="note">* Reportadas por el Service Worker de cada dispositivo: son aproximadas y no incluyen
+          dispositivos sin conexión, bloqueados por el sistema o con el navegador cerrado por completo.</p>
+      </section>
+
+      <!-- DISPOSITIVOS -->
+      <section id="tab-devices" class="card" hidden>
+        <h2>Dispositivos</h2>
+        <div class="stats" id="device-stats"></div>
+        <div class="actions">
+          <button id="btn-refresh-devices">Actualizar</button>
+          <button id="btn-prune">Revisar tokens inválidos</button>
+        </div>
+        <p id="devices-msg" class="msg" role="status"></p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Plataforma</th><th>Grupos</th><th>Última actividad</th><th>Token</th><th></th></tr></thead>
+            <tbody id="devices-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PLANTILLAS -->
+      <section id="tab-templates" class="card" hidden>
+        <h2>Plantillas de mensaje</h2>
+        <form id="form-template">
+          <div class="row">
+            <label class="field">Nombre<input id="tpl-name" type="text" maxlength="60" required></label>
+            <label class="field">URL (opcional)<input id="tpl-url" type="text"></label>
+          </div>
+          <label class="field">Título<input id="tpl-title" type="text" maxlength="65" required></label>
+          <label class="field">Mensaje<textarea id="tpl-body" maxlength="240" required></textarea></label>
+          <button class="primary" type="submit">Guardar plantilla</button>
+        </form>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Título</th><th></th></tr></thead>
+            <tbody id="templates-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="dlg-detail">
+    <h2 id="detail-title"></h2>
+    <div id="detail-body"></div>
+    <div class="actions"><button id="detail-close">Cerrar</button></div>
+  </dialog>
+</body>
+</html>

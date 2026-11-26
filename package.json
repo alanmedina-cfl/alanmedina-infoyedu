@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "PWA de Alan Medina — Informática y Educación: redirige a la tienda y recibe notificaciones push (FCM)",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "npx netlify-cli dev",
     "set-admin": "node scripts/set-admin.mjs",
@@ -12,5 +14,8 @@
   },
   "dependencies": {
     "firebase-admin": "^14.5.1"
+  },
+  "overrides": {
+    "jwks-rsa": "^3.2.0"
   }
 }
